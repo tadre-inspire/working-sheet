@@ -57,6 +57,23 @@ npm run billing:sync -- --rate 1550 --apply    # creates or updates the Paystack
 Then point a Paystack webhook at `https://<your-domain>/api/paystack/webhook`. Existing subscribers keep the price
 they signed up at.
 
+## Deploy to Vercel
+
+1. Go to vercel.com/new, sign in with GitHub, and import this repo. Leave every build setting as detected.
+2. Under **Environment Variables**, add the values from the table above (the two `NEXT_PUBLIC_SUPABASE_*` keys,
+   `SUPABASE_SERVICE_ROLE_KEY`, and `PAYSTACK_SECRET_KEY` once billing is ready). Leave `NEXT_PUBLIC_SITE_URL` out;
+   the app falls back to the address it is served from.
+3. Deploy. Your app is live at `https://<project>.vercel.app`.
+4. In Supabase, Authentication, URL Configuration: set **Site URL** to that address and add
+   `https://<project>.vercel.app/**` (and `http://localhost:3100/**`) under **Redirect URLs**, so confirmation and
+   reset emails link to the live site.
+5. Open the live URL in Chrome or Edge. The Install app button on the home page now works. On iPhone use Safari,
+   Share, Add to Home Screen.
+6. When you turn on billing, add a Paystack webhook pointing at `https://<project>.vercel.app/api/paystack/webhook`.
+
+`vercel.json` runs the server functions in London, next to the Supabase database. Vercel's free Hobby plan is for
+personal, non-commercial use; check their terms and move to a paid plan before you charge customers.
+
 ## Sign-ups
 
 Sign-ups are invite-only. Allowed emails live in a private database table; the lock is enforced by a trigger on
