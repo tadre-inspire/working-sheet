@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useIsLocalhost } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { Icon } from "./Icon";
 
@@ -55,6 +56,8 @@ export function SignInForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [googleError, setGoogleError] = useState<string | null>(null);
+  const local = useIsLocalhost();
 
   // Arriving from a password-reset email.
   useEffect(() => {
@@ -77,6 +80,7 @@ export function SignInForm() {
   async function google() {
     setError(null);
     setInfo(null);
+    setGoogleError(null);
     setBusy(true);
     // Ask Supabase first: if Google isn't switched on, say so instead of landing on a raw error page.
     const settings = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/settings`, {
@@ -85,7 +89,7 @@ export function SignInForm() {
       .then((r) => r.json() as Promise<{ external?: { google?: boolean } }>)
       .catch(() => null);
     if (settings?.external && settings.external.google === false) {
-      setError(friendly("provider is not enabled"));
+      setGoogleError(friendly("provider is not enabled"));
       setBusy(false);
       return;
     }
@@ -94,7 +98,7 @@ export function SignInForm() {
       options: { redirectTo: `${window.location.origin}${safeNext()}` },
     });
     if (err) {
-      setError(friendly(err.message));
+      setGoogleError(friendly(err.message));
       setBusy(false);
     } // on success the browser leaves for Google
   }
@@ -190,6 +194,11 @@ export function SignInForm() {
           >
             <GoogleMark /> Continue with Google
           </button>
+          {googleError && (
+            <p role="alert" className="mt-3 rounded-2xl border border-ink bg-surface-2 px-4 py-3 text-sm font-semibold">
+              {googleError}
+            </p>
+          )}
           <div className="my-5 flex items-center gap-3 text-xs font-semibold text-muted">
             <span className="h-px flex-1 bg-line" /> or use email <span className="h-px flex-1 bg-line" />
           </div>
@@ -277,9 +286,11 @@ export function SignInForm() {
           {busy ? "One moment…" : COPY[mode].button}
           {!busy && <Icon name="arrow" className="size-5" />}
         </button>
-        <Link href="/" className="block text-center text-sm font-semibold text-muted hover:text-ink">
-          Continue without an account
-        </Link>
+        {local && (
+          <Link href="/" className="block text-center text-sm font-semibold text-muted hover:text-ink">
+            Continue without an account (this computer only)
+          </Link>
+        )}
       </form>
     </>
   );

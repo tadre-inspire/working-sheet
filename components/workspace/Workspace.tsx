@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { createPage, deletePage, updatePage, usePages, type Page } from "@/lib/pages";
 import { useSyncStatus } from "@/lib/pages-sync";
+import { useMyPlan } from "@/lib/plan";
 import { TEMPLATES } from "@/lib/templates";
 import { Icon } from "../Icon";
 import { Editor } from "./Editor";
@@ -163,10 +164,54 @@ function Tree({
   );
 }
 
+function UpgradeNotice({ used, limit, onClose }: { used: number; limit: number; onClose: () => void }) {
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] grid place-items-end bg-black/50 p-3 backdrop-blur-sm sm:place-items-center"
+      onMouseDown={onClose}
+    >
+      <div
+        role="dialog"
+        aria-label="Free plan limit"
+        onMouseDown={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-[28px] border border-line bg-surface p-6 text-center shadow-card sm:p-8"
+      >
+        <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-lemon font-display text-2xl font-extrabold text-on-lemon">
+          {used}/{limit}
+        </span>
+        <h2 className="mt-5 font-display text-2xl font-bold tracking-tight">You&rsquo;ve used this month&rsquo;s free project</h2>
+        <p className="mt-2 text-sm text-muted">
+          The Free plan includes {limit} new project a month. Upgrade for unlimited projects, or keep working on the one
+          you have. Pages inside a project are always free.
+        </p>
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+          <Link
+            href="/billing"
+            className="inline-flex h-12 items-center justify-center rounded-full bg-lemon px-6 font-bold text-on-lemon"
+          >
+            See plans
+          </Link>
+          <button onClick={onClose} className="h-12 rounded-full border border-line px-6 font-bold hover:border-ink">
+            Not now
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Workspace() {
   const { pages, ready, saveError } = usePages();
   const { user } = useAuth();
   const sync = useSyncStatus();
+  const { plan: myPlan, refresh: refreshPlan } = useMyPlan();
+  const [upgrade, setUpgrade] = useState(false);
   const router = useRouter();
   const params = useSearchParams();
   const wantNew = params.get("new") === "1";
@@ -193,11 +238,22 @@ export function Workspace() {
   // ?new=1 opens the template picker once, not on every page change.
   const openedFromUrl = useRef(false);
   useEffect(() => {
-    if (ready && wantNew && !openedFromUrl.current) {
-      openedFromUrl.current = true;
-      setPicker({ parentId: null });
+    if (!ready || !wantNew || openedFromUrl.current) return;
+    if (user && !myPlan) return; // wait until we know the plan
+    openedFromUrl.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (user && myPlan && !myPlan.unlimited && myPlan.used >= myPlan.limit) setUpgrade(true);
+    else setPicker({ parentId: null });
+  }, [ready, wantNew, user, myPlan]);
+
+  // A new top-level page is a "project". Free accounts get one a month.
+  function openPicker(parentId: string | null) {
+    if (parentId === null && user && myPlan && !myPlan.unlimited && myPlan.used >= myPlan.limit) {
+      setUpgrade(true);
+      return;
     }
-  }, [ready, wantNew]);
+    setPicker({ parentId });
+  }
 
   const page = useMemo(() => pages.find((p) => p.id === selectedId) ?? null, [pages, selectedId]);
 
@@ -234,6 +290,7 @@ export function Workspace() {
     if (parentId) setOpen((o) => new Set(o).add(parentId));
     setPicker(null);
     select(id);
+    if (!parentId) setTimeout(refreshPlan, 2500); // after the new project has synced
   }
 
   function remove(id: string) {
@@ -266,7 +323,7 @@ export function Workspace() {
       <div className="flex items-center justify-between px-2 pb-2 pt-1">
         <h2 className="font-display text-lg font-bold">Pages</h2>
         <button
-          onClick={() => setPicker({ parentId: null })}
+          onClick={() => openPicker(null)}
           className="flex h-8 items-center gap-1 rounded-full bg-ink px-3 text-xs font-bold text-bg transition hover:bg-lemon hover:text-on-lemon"
         >
           <Icon name="plus" className="size-3.5" strokeWidth={2.4} /> New
@@ -280,7 +337,7 @@ export function Workspace() {
         open={open}
         toggle={toggle}
         onSelect={select}
-        onAddChild={(id) => setPicker({ parentId: id })}
+        onAddChild={(id) => openPicker(id)}
         onDelete={remove}
       />
       <p className="px-2 pt-3 text-[11px] leading-snug text-muted">
@@ -314,7 +371,7 @@ export function Workspace() {
           <Icon name="chevD" className={`size-4 transition ${showTree ? "rotate-180" : ""}`} />
         </button>
         <button
-          onClick={() => setPicker({ parentId: null })}
+          onClick={() => openPicker(null)}
           className="flex h-10 items-center gap-1.5 rounded-full bg-lemon px-4 text-sm font-bold text-on-lemon"
         >
           <Icon name="plus" className="size-4" strokeWidth={2.4} /> New page
@@ -391,7 +448,7 @@ export function Workspace() {
               <div>
                 <p className="font-display text-2xl font-bold">No page selected</p>
                 <button
-                  onClick={() => setPicker({ parentId: null })}
+                  onClick={() => openPicker(null)}
                   className="mt-4 rounded-full bg-lemon px-5 py-2.5 text-sm font-bold text-on-lemon"
                 >
                   Start a project
@@ -403,6 +460,16 @@ export function Workspace() {
       </div>
 
       {picker && <TemplatePicker onPick={create} onClose={closePicker} />}
+      {upgrade && (
+        <UpgradeNotice
+          used={myPlan?.used ?? 1}
+          limit={myPlan?.limit ?? 1}
+          onClose={() => {
+            setUpgrade(false);
+            if (wantNew) router.replace("/workspace");
+          }}
+        />
+      )}
     </div>
   );
 }

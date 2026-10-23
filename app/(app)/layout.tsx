@@ -2,9 +2,11 @@ import { Sidebar } from "@/components/Sidebar";
 import { RightPanel } from "@/components/RightPanel";
 import { PagesSync } from "@/components/PagesSync";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { AuthGate } from "@/components/AuthGate";
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
+    <AuthGate>
     <div className="min-h-screen md:pl-[92px]">
       <PagesSync />
       <OfflineBanner />
@@ -16,5 +18,6 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       </div>
       <Sidebar />
     </div>
+    </AuthGate>
   );
 }

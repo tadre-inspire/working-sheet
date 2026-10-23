@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { displayName, useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/billing";
+import { useMyPlan } from "@/lib/plan";
 import {
   PLAN_INFO,
   chargeFor,
@@ -39,13 +40,14 @@ async function api(path: string, body?: unknown) {
 // Features marked soon aren't built yet; they're what each plan is meant to unlock.
 type Feature = { text: string; soon?: boolean };
 const FREE_FEATURES: Feature[] = [
-  { text: "Workspace, templates and working sheets" },
-  { text: "Draw and comment on sheets" },
+  { text: "1 new project a month" },
+  { text: "Every tool: draw, shapes, text, crop, comments" },
   { text: "Creative news and your topics" },
   { text: "Sync across your devices" },
 ];
 const PRO_FEATURES: Feature[] = [
   { text: "Everything in Free" },
+  { text: "Unlimited projects" },
   { text: "Publish portfolio pages", soon: true },
   { text: "AI palette and shot-list helper", soon: true },
   { text: "More image storage", soon: true },
@@ -110,6 +112,7 @@ export function BillingPanel() {
   const reference = params.get("reference") ?? params.get("trxref");
   const { user, ready } = useAuth();
   const { sub, isPaid, loaded, refresh } = useSubscription();
+  const { plan: myPlan } = useMyPlan();
 
   const [rows, setRows] = useState<Row[]>([]);
   const [configured, setConfigured] = useState<boolean | null>(null);
@@ -126,8 +129,13 @@ export function BillingPanel() {
       .then((p: { configured: boolean; rows: Row[] }) => {
         setRows(p.rows ?? []);
         setConfigured(p.configured);
-        // Nigerian visitors see naira first; everyone else sees dollars.
-        if (Intl.DateTimeFormat().resolvedOptions().timeZone === "Africa/Lagos") setCurrency("NGN");
+        // Nigerian visitors see naira first; everyone else sees dollars, unless there are
+        // no dollar plans yet (USD not enabled), in which case naira is the only way to pay.
+        const rows = p.rows ?? [];
+        const hasNgn = rows.some((r) => r.currency === "NGN");
+        const hasUsd = rows.some((r) => r.currency === "USD");
+        const inLagos = Intl.DateTimeFormat().resolvedOptions().timeZone === "Africa/Lagos";
+        if (hasNgn && (inLagos || !hasUsd)) setCurrency("NGN");
       })
       .catch(() => setConfigured(false));
   }, []);
@@ -155,7 +163,7 @@ export function BillingPanel() {
   const cycleAmount = (plan: PaidPlan, i: Interval, c: Currency): number | null => {
     const row = rows.find((r) => r.plan === plan && r.interval === i && r.currency === c);
     if (row) return row.amount;
-    return c === "USD" ? chargeFor(plan, i, "USD", 0) : null;
+    return chargeFor(plan, i, c);
   };
 
   const businessPlan: PaidPlan = team === "small" ? "business" : "business_large";
@@ -326,7 +334,13 @@ export function BillingPanel() {
           </div>
           <div className="mt-3">
             <p className="font-display text-4xl font-extrabold">{currency === "NGN" ? "₦0" : "$0"}</p>
-            <p className="mt-1 h-4 text-xs font-semibold opacity-70">For one person</p>
+            <p className="mt-1 min-h-4 text-xs font-semibold opacity-70">
+              {user && myPlan && !isPaid
+                ? myPlan.unlimited
+                  ? "Unlimited projects, included for your account"
+                  : `${myPlan.used} of ${myPlan.limit} project used this month`
+                : "Try it with 1 new project a month"}
+            </p>
           </div>
           <Features items={FREE_FEATURES} />
         </section>

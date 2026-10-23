@@ -121,13 +121,18 @@ export async function startSync() {
     ...p,
     id: remap.get(p.id) ?? p.id,
     parentId: p.parentId ? (remap.get(p.parentId) ?? p.parentId) : null,
-    seed: false,
+    seed: p.seed,
   }));
 
   // Newest edit wins per page; anything only on this device gets pushed up.
   const merged = new Map(remotePages.map((p) => [p.id, p]));
   const toPush: Page[] = [];
   for (const p of local) {
+    if (p.seed) {
+      // Sample pages stay on this device; pushing them would use up the free project.
+      if (!merged.has(p.id)) merged.set(p.id, p);
+      continue;
+    }
     const r = merged.get(p.id);
     if (!r || p.updatedAt > r.updatedAt + 2000) {
       merged.set(p.id, p);

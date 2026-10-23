@@ -1,7 +1,7 @@
 "use client";
 
 import type { User } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { supabase } from "./supabase";
 
 export function useAuth() {
@@ -27,4 +27,13 @@ export function useAuth() {
 export function displayName(user: User | null | undefined, fallback = "You"): string {
   const m = (user?.user_metadata ?? {}) as Record<string, string | undefined>;
   return m.display_name || m.full_name || m.name || user?.email?.split("@")[0] || fallback;
+}
+
+/** True only on the developer's own computer (localhost). False while rendering on the server. */
+export function useIsLocalhost(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    () => ["localhost", "127.0.0.1"].includes(window.location.hostname),
+    () => false,
+  );
 }

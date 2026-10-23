@@ -13,7 +13,8 @@ Android and iPhone (PWA).
   zoom and pan, full screen. Works with mouse, finger and stylus. Shortcuts: `V H P B E R T C M`.
 - **News**: live film, motion, animation, design and photography stories from free publisher feeds. No API key.
 - **Accounts and sync**: Supabase auth, pages sync across devices, row-level security on every table.
-- **Billing**: Free, Pro and Business plans in naira and US dollars through Paystack subscriptions.
+- **Plans**: Free (one new project a month), Pro and Business (unlimited projects) in naira and US dollars through
+  Paystack subscriptions.
 - **PWA**: install button on the home page, offline fallback, update prompt.
 
 ## Run it
@@ -47,15 +48,17 @@ Never commit `.env.local`.
 
 ## Billing setup
 
-Prices live in `lib/pricing.ts` (USD). Naira prices are fixed amounts you choose from the current rate:
+Prices live in `lib/pricing.ts`, fixed in both currencies (naira is not converted from dollars, so it never moves
+with the exchange rate). To create or update the plans in Paystack:
 
 ```bash
-npm run billing:sync -- --rate 1550            # dry run: prints the price table
-npm run billing:sync -- --rate 1550 --apply    # creates or updates the Paystack plans
+npm run billing:sync              # dry run: prints the price table
+npm run billing:sync -- --apply   # creates or updates the Paystack plans
 ```
 
 Then point a Paystack webhook at `https://<your-domain>/api/paystack/webhook`. Existing subscribers keep the price
-they signed up at.
+they signed up at. A currency your Paystack account hasn't enabled (usually USD) is skipped and listed; enable it
+in Paystack and run the command again.
 
 ## Deploy to Vercel
 
@@ -74,10 +77,17 @@ they signed up at.
 `vercel.json` runs the server functions in London, next to the Supabase database. Vercel's free Hobby plan is for
 personal, non-commercial use; check their terms and move to a paid plan before you charge customers.
 
-## Sign-ups
+## Accounts and the Free plan
 
-Sign-ups are invite-only. Allowed emails live in a private database table; the lock is enforced by a trigger on
-`auth.users`, so it can't be bypassed from the browser.
+Anyone can create an account (email or Google). The app needs an account, so visitors are sent to sign in first.
+On localhost the app also works without one, for development.
+
+- **Free**: one new project (a top-level page) per calendar month. Pages inside a project are unlimited.
+- **Pro and Business**: unlimited projects.
+- **Free access list**: emails in the private `private.allowed_emails` table (the owner) are unlimited without paying.
+
+The limit is enforced in the database by a trigger, so it can't be skipped from the browser. Deleting a project does
+not give the slot back.
 
 ## Project layout
 

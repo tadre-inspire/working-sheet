@@ -1,12 +1,11 @@
 // Creates or updates the Paystack plans for every tier, interval and currency,
 // then records their codes in the `paystack_plans` table.
 //
-//   npm run billing:sync -- --rate 1550            # dry run: prints the price table
-//   npm run billing:sync -- --rate 1550 --apply    # creates / updates the plans
+//   npm run billing:sync              # dry run: prints the price table
+//   npm run billing:sync -- --apply   # creates / updates the plans in Paystack
 //
-// --rate is naira per US dollar. It is required on purpose: a wrong default
-// would put wrong prices in front of customers. Existing subscribers keep the
-// price they signed up at (we never update existing subscriptions).
+// Prices come from lib/pricing.ts (fixed in both currencies). Existing subscribers
+// keep the price they signed up at: we never update existing subscriptions.
 
 import { createClient } from "@supabase/supabase-js";
 import { PAID_PLANS, PLAN_INFO, chargeFor, planKey } from "../lib/pricing.ts";
@@ -19,12 +18,6 @@ try {
 
 const args = process.argv.slice(2);
 const apply = args.includes("--apply");
-const rateIdx = args.indexOf("--rate");
-const rate = rateIdx >= 0 ? Number(args[rateIdx + 1]) : NaN;
-if (!Number.isFinite(rate) || rate < 100) {
-  console.error("Pass the current rate, e.g. --rate 1550 (naira per US dollar).");
-  process.exit(1);
-}
 
 const secret = process.env.PAYSTACK_SECRET_KEY;
 const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -39,7 +32,7 @@ const wanted = [];
 for (const plan of PAID_PLANS) {
   for (const interval of ["month", "year"]) {
     for (const currency of ["USD", "NGN"]) {
-      const charge = chargeFor(plan, interval, currency, rate);
+      const charge = chargeFor(plan, interval, currency);
       const info = PLAN_INFO[plan];
       wanted.push({
         key: planKey(plan, interval, currency),
@@ -55,7 +48,7 @@ for (const plan of PAID_PLANS) {
   }
 }
 
-console.log(`\nRate: ₦${rate.toLocaleString()} per $1\n`);
+console.log("\nPlan prices (from lib/pricing.ts)\n");
 console.table(
   wanted.map((w) => ({
     plan: w.plan,

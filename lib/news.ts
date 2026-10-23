@@ -74,7 +74,8 @@ function escapeRe(s: string) {
 }
 
 // Some publisher feeds carry paid gambling posts; keep them out.
-const SPAM = /\b(casino|betting|bookmaker|gambl\w*|slots?|sportsbook|poker)\b/i;
+const SPAM =
+  /\b(casino|betting|bookmaker|gambl\w*|slots?|sportsbook|poker|jackpot|lottery|wager\w*|welcome bonus|sign-?up bonus|promo code|withdrawals?|payouts?)\b/i;
 
 const decodeAll = (s: string) =>
   s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&amp;/g, "&");
