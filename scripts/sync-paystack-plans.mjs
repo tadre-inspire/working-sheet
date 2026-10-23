@@ -47,7 +47,7 @@ for (const plan of PAID_PLANS) {
         interval,
         currency,
         amount: charge * 100, // kobo / cents
-        name: `Marketcap ${info.name} (${info.users}) ${interval === "month" ? "monthly" : "yearly"} ${currency}`,
+        name: `Working Sheet ${info.name} (${info.users}) ${interval === "month" ? "monthly" : "yearly"} ${currency}`,
         psInterval: interval === "month" ? "monthly" : "annually",
         charge,
       });

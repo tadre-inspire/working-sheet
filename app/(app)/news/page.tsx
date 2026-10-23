@@ -1,6 +1,6 @@
 import { NewsFeed } from "@/components/NewsFeed";
 
-export const metadata = { title: "Creative news — Marketcap" };
+export const metadata = { title: "Creative news — Working Sheet" };
 
 export default function NewsPage() {
   return (

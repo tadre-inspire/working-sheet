@@ -34,8 +34,8 @@ export function InstallApp({ variant }: { variant: "icon" | "card" }) {
     return (
       <button
         onClick={install}
-        title="Install Marketcap"
-        aria-label="Install Marketcap as an app"
+        title="Install Working Sheet"
+        aria-label="Install Working Sheet as an app"
         className="grid size-12 place-items-center rounded-2xl text-muted transition hover:bg-surface-2 hover:text-ink"
       >
         <Icon name="download" className="size-[22px]" />
@@ -54,10 +54,10 @@ export function InstallApp({ variant }: { variant: "icon" | "card" }) {
     >
       <div className="flex flex-wrap items-center gap-4">
         <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-lemon font-display text-2xl font-extrabold text-on-lemon">
-          M
+          W
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="font-display text-xl font-bold tracking-tight sm:text-2xl">Get Marketcap on your devices</h2>
+          <h2 className="font-display text-xl font-bold tracking-tight sm:text-2xl">Get Working Sheet on your devices</h2>
           <p className="text-sm text-muted">
             One app for desktop, Android and iPhone. Opens like any app and keeps working offline.
           </p>

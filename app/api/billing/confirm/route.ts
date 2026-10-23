@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     if (tx.status !== "success") return Response.json({ status: tx.status });
     if (tx.metadata?.user_id !== user.id) return Response.json({ error: "That payment isn't yours." }, { status: 403 });
     const row = await ourPlanFor(tx);
-    if (!row) return Response.json({ error: "Not a Marketcap plan payment." }, { status: 400 });
+    if (!row) return Response.json({ error: "Not a Working Sheet plan payment." }, { status: 400 });
 
     await activateFromTransaction(user.id, tx, row);
     return Response.json({ status: "success" });

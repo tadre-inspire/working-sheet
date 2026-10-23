@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "Offline — Marketcap" };
+export const metadata = { title: "Offline — Working Sheet" };
 
 // Shown by the service worker when a page can't be loaded without a connection.
 export default function Offline() {
@@ -8,7 +8,7 @@ export default function Offline() {
     <main className="grid min-h-screen place-items-center p-6">
       <div className="max-w-md text-center">
         <span className="mx-auto grid size-16 place-items-center rounded-2xl bg-lemon font-display text-3xl font-extrabold text-on-lemon">
-          M
+          W
         </span>
         <h1 className="mt-6 font-display text-4xl font-extrabold tracking-tight">You&rsquo;re offline</h1>
         <p className="mt-3 text-muted">

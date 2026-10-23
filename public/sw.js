@@ -1,4 +1,4 @@
-/* Marketcap service worker.
+/* Working Sheet service worker.
  *
  * - Pages: network first, falling back to the last copy, then to /offline.
  * - Static files (JS, CSS, fonts, icons): cache first.

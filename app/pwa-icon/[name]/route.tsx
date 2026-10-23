@@ -39,7 +39,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ name: s
             letterSpacing: -mark * 0.04,
           }}
         >
-          M
+          W
         </div>
       </div>
     ),

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { Workspace } from "@/components/workspace/Workspace";
 
-export const metadata = { title: "Workspace — Marketcap" };
+export const metadata = { title: "Workspace — Working Sheet" };
 
 export default function WorkspacePage() {
   return (

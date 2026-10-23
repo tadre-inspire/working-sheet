@@ -1,12 +1,12 @@
 import type { MetadataRoute } from "next";
 
-// Makes Marketcap installable on desktop (Chrome, Edge) and on phones
+// Makes Working Sheet installable on desktop (Chrome, Edge) and on phones
 // (Android Chrome, iOS Safari via Add to Home Screen).
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Marketcap",
-    short_name: "Marketcap",
+    name: "Working Sheet",
+    short_name: "Working Sheet",
     description: "Plan, price and publish creative work: working sheets, pages, news and portfolios.",
     start_url: "/",
     scope: "/",

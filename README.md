@@ -1,4 +1,4 @@
-# Marketcap · Working Sheet
+# Working Sheet
 
 A Notion-style workspace for creatives. Write pages, plan on a **working sheet** (an infinite canvas with images,
 notes, shapes, text, drawing and comment pins), follow creative news, and track what you pay for tools.

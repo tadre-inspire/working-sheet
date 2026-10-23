@@ -20,8 +20,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  applicationName: "Marketcap",
-  appleWebApp: { capable: true, title: "Marketcap", statusBarStyle: "black-translucent" },
+  applicationName: "Working Sheet",
+  appleWebApp: { capable: true, title: "Working Sheet", statusBarStyle: "black-translucent" },
   formatDetection: { telephone: false },
   icons: {
     icon: [
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/pwa-icon/180", sizes: "180x180", type: "image/png" }],
   },
-  title: "Marketcap — plan, price, publish",
+  title: "Working Sheet — plan, price, publish",
   description:
     "A Notion-style workspace for creatives: working sheets, AI tool pricing, news and portfolios.",
 };

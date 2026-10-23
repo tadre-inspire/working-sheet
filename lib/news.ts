@@ -145,7 +145,7 @@ function parseFeed(xml: string, isVideoFeed = false) {
 async function getText(url: string): Promise<string> {
   const res = await fetch(url, {
     headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; MarketcapBot/0.1)",
+      "User-Agent": "Mozilla/5.0 (compatible; WorkingSheetBot/0.1)",
       Accept: "application/rss+xml,application/xml,text/xml,*/*",
     },
     signal: AbortSignal.timeout(8000),

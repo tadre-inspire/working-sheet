@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { BillingPanel } from "@/components/BillingPanel";
 import { InstallApp } from "@/components/InstallApp";
 
-export const metadata = { title: "Account & plan — Marketcap" };
+export const metadata = { title: "Account & plan — Working Sheet" };
 
 export default function BillingPage() {
   return (

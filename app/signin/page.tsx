@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SignInForm } from "@/components/SignInForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-export const metadata = { title: "Sign in — Marketcap" };
+export const metadata = { title: "Sign in — Working Sheet" };
 
 export default function SignIn() {
   return (
@@ -50,9 +50,9 @@ export default function SignIn() {
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
               <span className="grid size-10 place-items-center rounded-xl bg-lemon font-display font-extrabold text-on-lemon">
-                M
+                W
               </span>
-              <span className="font-display text-xl font-bold">Marketcap</span>
+              <span className="font-display text-xl font-bold">Working Sheet</span>
             </Link>
             <ThemeToggle />
           </div>

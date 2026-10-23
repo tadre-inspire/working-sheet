@@ -35,10 +35,10 @@ export function Sidebar() {
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[92px] flex-col items-center border-r border-line bg-surface py-5 md:flex">
         <Link
           href="/"
-          aria-label="Marketcap home"
+          aria-label="Working Sheet home"
           className="grid size-11 place-items-center rounded-2xl bg-lemon font-display text-lg font-extrabold text-on-lemon"
         >
-          M
+          W
         </Link>
 
         <nav className="mt-8 flex flex-1 flex-col items-center gap-1">
