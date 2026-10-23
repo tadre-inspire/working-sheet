@@ -22,3 +22,9 @@ export function useAuth() {
 
   return state;
 }
+
+/** Name to show for a user: their chosen name, else the Google profile name, else the email prefix. */
+export function displayName(user: User | null | undefined, fallback = "You"): string {
+  const m = (user?.user_metadata ?? {}) as Record<string, string | undefined>;
+  return m.display_name || m.full_name || m.name || user?.email?.split("@")[0] || fallback;
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "@/lib/auth";
+import { displayName, useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/billing";
 import { planLabel } from "@/lib/pricing";
 import { Icon } from "./Icon";
@@ -10,10 +10,7 @@ export function ProfileCard() {
   const { user, ready } = useAuth();
   const { sub, isPaid } = useSubscription();
 
-  const name =
-    (user?.user_metadata?.display_name as string | undefined) ??
-    user?.email?.split("@")[0] ??
-    "Guest";
+  const name = displayName(user, "Guest");
 
   return (
     <div className="mb-6 flex items-center gap-3 rounded-3xl bg-surface p-3 shadow-card">

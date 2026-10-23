@@ -18,6 +18,33 @@ const COPY: Record<Mode, { title: string; button: string }> = {
   recover: { title: "New password", button: "Save password" },
 };
 
+function friendly(msg: string): string {
+  if (/database error saving new user|invite-only/i.test(msg)) {
+    return "Sign-ups are invite-only right now. Ask Tadre for an invite.";
+  }
+  if (/provider is not enabled|unsupported provider/i.test(msg)) {
+    return "Google sign-in isn't switched on yet. Use email for now.";
+  }
+  return msg || "Something went wrong. Try again.";
+}
+
+// Where to go after signing in. Only same-site paths are allowed.
+function safeNext(): string {
+  const n = new URLSearchParams(window.location.search).get("next");
+  return n && n.startsWith("/") && !n.startsWith("//") && !n.startsWith("/\\") ? n : "/";
+}
+
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+      <path fill="#4285F4" d="M23 12.27c0-.8-.07-1.56-.2-2.3H12v4.35h6.17a5.27 5.27 0 0 1-2.29 3.46v2.87h3.7C21.74 18.65 23 15.7 23 12.27Z" />
+      <path fill="#34A853" d="M12 23.5c3.1 0 5.7-1.03 7.6-2.8l-3.7-2.87c-1.03.69-2.35 1.1-3.9 1.1-3 0-5.54-2.02-6.45-4.74H1.73v2.97A11.5 11.5 0 0 0 12 23.5Z" />
+      <path fill="#FBBC05" d="M5.55 14.19a6.9 6.9 0 0 1 0-4.38V6.84H1.73a11.5 11.5 0 0 0 0 10.32l3.82-2.97Z" />
+      <path fill="#EA4335" d="M12 5.07c1.69 0 3.2.58 4.4 1.72l3.28-3.28A11.04 11.04 0 0 0 12 .5 11.5 11.5 0 0 0 1.73 6.84l3.82 2.97C6.46 7.09 9 5.07 12 5.07Z" />
+    </svg>
+  );
+}
+
 export function SignInForm() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("signin");
@@ -36,6 +63,41 @@ export function SignInForm() {
     });
     return () => data.subscription.unsubscribe();
   }, []);
+
+  // Coming back from Google: show why if it didn't work (usually: not on the invite list).
+  useEffect(() => {
+    const raw = window.location.hash.slice(1) || window.location.search.slice(1);
+    const reason = new URLSearchParams(raw).get("error_description");
+    if (!reason) return;
+    window.history.replaceState(null, "", window.location.pathname + window.location.search.replace(/[?&]error[^&]*/g, ""));
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setError(friendly(reason));
+  }, []);
+
+  async function google() {
+    setError(null);
+    setInfo(null);
+    setBusy(true);
+    // Ask Supabase first: if Google isn't switched on, say so instead of landing on a raw error page.
+    const settings = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/settings`, {
+      headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "" },
+    })
+      .then((r) => r.json() as Promise<{ external?: { google?: boolean } }>)
+      .catch(() => null);
+    if (settings?.external && settings.external.google === false) {
+      setError(friendly("provider is not enabled"));
+      setBusy(false);
+      return;
+    }
+    const { error: err } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}${safeNext()}` },
+    });
+    if (err) {
+      setError(friendly(err.message));
+      setBusy(false);
+    } // on success the browser leaves for Google
+  }
 
   function switchTo(next: Mode) {
     setMode(next);
@@ -56,18 +118,18 @@ export function SignInForm() {
       if (mode === "signin") {
         const { error: err } = await supabase.auth.signInWithPassword({ email, password });
         if (err) throw err;
-        router.push("/");
+        router.push(safeNext());
       } else if (mode === "signup") {
         const { data, error: err } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: { display_name: name.trim() || undefined },
-            emailRedirectTo: `${window.location.origin}/signin`,
+            emailRedirectTo: `${window.location.origin}${safeNext()}`,
           },
         });
         if (err) throw err;
-        if (data.session) router.push("/");
+        if (data.session) router.push(safeNext());
         else setInfo("Check your email to confirm your account, then sign in.");
       } else if (mode === "forgot") {
         const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
@@ -78,16 +140,10 @@ export function SignInForm() {
       } else {
         const { error: err } = await supabase.auth.updateUser({ password });
         if (err) throw err;
-        router.push("/");
+        router.push(safeNext());
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "";
-      // The database refuses sign-ups from emails that aren't on the invite list.
-      setError(
-        /database error saving new user|invite-only/i.test(msg)
-          ? "Sign-ups are invite-only right now. Ask Tadre for an invite."
-          : msg || "Something went wrong. Try again.",
-      );
+      setError(friendly(err instanceof Error ? err.message : ""));
     } finally {
       setBusy(false);
     }
@@ -124,7 +180,23 @@ export function SignInForm() {
         {mode === "recover" && "Choose a new password for your account."}
       </p>
 
-      <form onSubmit={submit} className="mt-8 space-y-4">
+      {(mode === "signin" || mode === "signup") && (
+        <div className="mt-8">
+          <button
+            type="button"
+            onClick={google}
+            disabled={busy}
+            className="flex h-14 w-full items-center justify-center gap-3 rounded-full border border-line bg-surface text-base font-bold transition hover:-translate-y-0.5 hover:border-ink hover:shadow-card disabled:opacity-60 disabled:hover:translate-y-0"
+          >
+            <GoogleMark /> Continue with Google
+          </button>
+          <div className="my-5 flex items-center gap-3 text-xs font-semibold text-muted">
+            <span className="h-px flex-1 bg-line" /> or use email <span className="h-px flex-1 bg-line" />
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={submit} className={`${mode === "signin" || mode === "signup" ? "" : "mt-8 "}space-y-4`}>
         {mode === "signup" && (
           <label className="block">
             <span className="sr-only">Name</span>

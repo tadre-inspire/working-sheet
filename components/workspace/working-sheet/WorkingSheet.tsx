@@ -2,7 +2,7 @@
 
 import type { Editor } from "@tiptap/core";
 import { useEffect, useRef, useState } from "react";
-import { useAuth } from "@/lib/auth";
+import { displayName, useAuth } from "@/lib/auth";
 import { Icon } from "../../Icon";
 import { CommentPins, ThreadPanel, newMsg, newThread, type Thread } from "./comments";
 import { ColorPicker } from "./ColorPicker";
@@ -144,7 +144,7 @@ export function WorkingSheet({
   onDelete: () => void;
 }) {
   const { user } = useAuth();
-  const me = (user?.user_metadata?.display_name as string | undefined) ?? user?.email?.split("@")[0] ?? "You";
+  const me = displayName(user);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const vpRef = useRef<HTMLDivElement>(null);

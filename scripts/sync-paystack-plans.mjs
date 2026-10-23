@@ -86,25 +86,38 @@ async function paystack(path, method, body) {
   return json.data;
 }
 
+// One plan failing (for example a currency your Paystack account hasn't enabled yet)
+// must not stop the rest, so each plan is tried on its own and failures are listed at the end.
+const failed = [];
 for (const w of wanted) {
-  const body = { name: w.name, interval: w.psInterval, amount: w.amount, currency: w.currency };
-  let code = have.get(w.key);
-  if (code) {
-    await paystack(`/plan/${code}`, "PUT", { ...body, update_existing_subscriptions: false });
-    console.log(`updated  ${w.key}`);
-  } else {
-    code = (await paystack("/plan", "POST", body)).plan_code;
-    console.log(`created  ${w.key} -> ${code}`);
+  try {
+    const body = { name: w.name, interval: w.psInterval, amount: w.amount, currency: w.currency };
+    let code = have.get(w.key);
+    if (code) {
+      await paystack(`/plan/${code}`, "PUT", { ...body, update_existing_subscriptions: false });
+      console.log(`updated  ${w.key}`);
+    } else {
+      code = (await paystack("/plan", "POST", body)).plan_code;
+      console.log(`created  ${w.key} -> ${code}`);
+    }
+    const { error } = await admin.from("paystack_plans").upsert({
+      key: w.key,
+      plan: w.plan,
+      interval: w.interval,
+      currency: w.currency,
+      amount: w.amount,
+      plan_code: code,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) throw error;
+  } catch (e) {
+    console.warn(`skipped  ${w.key}: ${e.message}`);
+    failed.push(w.key);
   }
-  const { error } = await admin.from("paystack_plans").upsert({
-    key: w.key,
-    plan: w.plan,
-    interval: w.interval,
-    currency: w.currency,
-    amount: w.amount,
-    plan_code: code,
-    updated_at: new Date().toISOString(),
-  });
-  if (error) throw error;
 }
-console.log("\nDone.");
+console.log(`\nDone. ${wanted.length - failed.length} of ${wanted.length} plans are set up.`);
+if (failed.length) {
+  console.log(`Not created: ${failed.join(", ")}`);
+  console.log("If these are USD plans, enable USD in your Paystack account, then run this again.");
+  process.exitCode = 1;
+}

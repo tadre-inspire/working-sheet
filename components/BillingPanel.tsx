@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "@/lib/auth";
+import { displayName, useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/billing";
 import {
   PLAN_INFO,
@@ -185,10 +185,7 @@ export function BillingPanel() {
     router.push("/signin");
   }
 
-  const name = useMemo(
-    () => (user ? ((user.user_metadata?.display_name as string | undefined) ?? user.email?.split("@")[0] ?? "You") : ""),
-    [user],
-  );
+  const name = useMemo(() => (user ? displayName(user) : ""), [user]);
 
   if (!ready) return <div className="h-64 animate-pulse rounded-[28px] bg-surface-2" />;
 
@@ -219,7 +216,7 @@ export function BillingPanel() {
     if (!user) {
       return (
         <Link
-          href="/signin"
+          href="/signin?next=/billing"
           className="flex h-12 w-full items-center justify-center rounded-full bg-lemon font-bold text-on-lemon"
         >
           Sign in to upgrade
