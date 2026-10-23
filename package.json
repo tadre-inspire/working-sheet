@@ -6,9 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "billing:sync": "node scripts/sync-paystack-plans.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "@tiptap/extension-highlight": "^3.32.0",
+    "@tiptap/extension-list": "^3.32.0",
+    "@tiptap/extension-placeholder": "^3.32.0",
+    "@tiptap/pm": "^3.32.0",
+    "@tiptap/react": "^3.32.0",
+    "@tiptap/starter-kit": "^3.32.0",
+    "@tiptap/suggestion": "^3.32.0",
     "next": "16.4.2",
     "react": "19.3.0",
     "react-dom": "19.3.0"

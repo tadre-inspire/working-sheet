@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Marketcap · Working Sheet
 
-## Getting Started
+A Notion-style workspace for creatives. Write pages, plan on a **working sheet** (an infinite canvas with images,
+notes, shapes, text, drawing and comment pins), follow creative news, and track what you pay for tools.
 
-First, run the development server:
+Built with Next.js 16, React 19, Tailwind 4, TipTap, Supabase and Paystack. Installable as an app on desktop,
+Android and iPhone (PWA).
+
+## What's inside
+
+- **Workspace**: nested pages, templates, slash menu (`/`), and the **working sheet** block.
+- **Working sheet**: select, hand, pen, brush, eraser, shapes, text, crop, comments, colour picker with eyedropper,
+  zoom and pan, full screen. Works with mouse, finger and stylus. Shortcuts: `V H P B E R T C M`.
+- **News**: live film, motion, animation, design and photography stories from free publisher feeds. No API key.
+- **Accounts and sync**: Supabase auth, pages sync across devices, row-level security on every table.
+- **Billing**: Free, Pro and Business plans in naira and US dollars through Paystack subscriptions.
+- **PWA**: install button on the home page, offline fallback, update prompt.
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # then fill in the values
+npm run dev -- -p 3100
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3100. Without Supabase keys the app still works locally: pages are saved in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Production build (also how to test the installable app, since the service worker only runs in production):
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npx next start -p 3200
+```
 
-## Learn More
+## Environment variables
 
-To learn more about Next.js, take a look at the following resources:
+| Variable | Where it comes from |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase, Project Settings, API |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase, Project Settings, API |
+| `NEXT_PUBLIC_SITE_URL` | Where the app is served (Paystack return link) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase secret key. Server only. |
+| `PAYSTACK_SECRET_KEY` | Paystack, Settings, API Keys. Use the test key first. |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Never commit `.env.local`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Billing setup
 
-## Deploy on Vercel
+Prices live in `lib/pricing.ts` (USD). Naira prices are fixed amounts you choose from the current rate:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run billing:sync -- --rate 1550            # dry run: prints the price table
+npm run billing:sync -- --rate 1550 --apply    # creates or updates the Paystack plans
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Then point a Paystack webhook at `https://<your-domain>/api/paystack/webhook`. Existing subscribers keep the price
+they signed up at.
+
+## Sign-ups
+
+Sign-ups are invite-only. Allowed emails live in a private database table; the lock is enforced by a trigger on
+`auth.users`, so it can't be bypassed from the browser.
+
+## Project layout
+
+```
+app/                    routes: dashboard, workspace, news, billing, API routes, manifest, offline page
+components/workspace/   page editor and the working-sheet/ canvas
+lib/                    data stores, sync, pricing, Supabase and Paystack helpers
+public/sw.js            service worker (offline + caching)
+scripts/                billing plan sync
+```
+
+## Roadmap
+
+Team workspaces, publishable portfolio pages, an AI palette and shot-list helper, and App Store and Google Play
+builds. Features marked "Soon" in the app are not built yet.
